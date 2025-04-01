@@ -1,19 +1,11 @@
 <script setup lang="ts">
+import { BookPagination } from "@/types/book/Book";
 
-import { onMounted } from 'vue';
-import { BookPagination } from '@/types/book/Book';
-
-const props = defineProps<{ books: BookPagination }>();
-
-onMounted(() => {
-    console.log('Books:', props.books);
-});
+const { books } = defineProps<{ books: BookPagination }>();
 </script>
 
 <template>
-    <div>Hello</div>
+    <h1>Books List</h1>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>
