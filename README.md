@@ -26,3 +26,4 @@ This repository contains some laravel projects:
 - `php artisan make:middleware ExampleMiddleware` - Create new middleware
 - `php artisan make:mail ExampleMail` - Create new mail
 - `php artisan make:request ExampleRequest` - Create new form request
+- `php artisan make:controller Api/AttendeeController --api`
