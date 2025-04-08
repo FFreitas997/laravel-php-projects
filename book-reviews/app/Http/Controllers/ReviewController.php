@@ -2,63 +2,50 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\ReviewRequest;
+use App\Models\Book;
+use Exception;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ReviewController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Show the form for creating a new review.
+     * @param Book $book
+     * @return Response
      */
-    public function index()
+    public function create(Book $book): Response
     {
-        //
+        // Return the view for creating a new review for a book
+        return Inertia::render('review/create', ['book' => $book]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Store a newly created review in storage.
+     * @param ReviewRequest $request
+     * @param Book $book
+     * @return RedirectResponse|null
      */
-    public function create()
+    public function store(ReviewRequest $request, Book $book): ?RedirectResponse
     {
-        //
-    }
+        try {
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+            // Create a new review for the book
+            $book->reviews()->create($request->validated());
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
+            // Redirect to the book's page with a success message
+            return redirect()->route('books.show', $book->id)->with('success', 'Review created successfully.');
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+        } catch (Exception $exception) {
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+            // Log the exception
+            Log::error('Error creating review: ' . $exception->getMessage());
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+            // Redirect back with an error message
+            return redirect()->back()->with('error', 'An error occurred while creating the review.');
+        }
     }
 }

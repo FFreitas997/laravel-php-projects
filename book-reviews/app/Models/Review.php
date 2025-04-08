@@ -12,8 +12,23 @@ class Review extends Model
 
     protected $fillable = ['content', 'rating'];
 
+    /**
+     * The book that the review belongs to.
+     * @return BelongsTo
+     */
     public function book(): BelongsTo
     {
         return $this->belongsTo(Book::class);
+    }
+
+    /**
+     * The boot method to clear the cache when a review is created, updated, or deleted.
+     * @return void
+     */
+    protected static function booted(): void
+    {
+        static::created(static fn (Review $review) => cache()->forget('books-service-cache:' . md5("book-id:{$review->book_id}")));
+        static::updated(static fn (Review $review) => cache()->forget('books-service-cache:' . md5("book-id:{$review->book_id}")));
+        static::deleted(static fn (Review $review) => cache()->forget('books-service-cache:' . md5("book-id:{$review->book_id}")));
     }
 }
