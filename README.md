@@ -27,3 +27,4 @@ This repository contains some laravel projects:
 - `php artisan make:mail ExampleMail` - Create new mail
 - `php artisan make:request ExampleRequest` - Create new form request
 - `php artisan make:controller Api/AttendeeController --api`
+- `php artisan migrate:refresh --seed` - Apply all migration and seeder also
