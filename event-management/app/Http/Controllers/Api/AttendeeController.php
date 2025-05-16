@@ -3,47 +3,137 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AttendeeResource;
+use App\Http\Traits\CanLoadRelationships;
+use App\Models\Attendee;
+use App\Models\Event;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Log;
 
 class AttendeeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    use CanLoadRelationships;
+
+    private array $relations;
+
+    public function __construct()
     {
-        //
+        $this->relations = ['user'];
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Display a listing of attendees.
+     *
+     * @param Request $request
+     * @param Event $event
+     * @return AnonymousResourceCollection | JsonResponse
+     * @throws Exception
      */
-    public function store(Request $request)
+    public function index(Request $request, Event $event): AnonymousResourceCollection|JsonResponse
     {
-        //
+        try {
+
+            $size = $request->input('size', 10);
+
+            $attendees = $event->attendees()->latest();
+
+            if ($request->has('include')) {
+                $attendees = $this->loadRelationships($attendees);
+            }
+
+            return AttendeeResource::collection($attendees->paginate($size));
+
+        } catch (Exception $e) {
+
+            Log::error($e->getMessage());
+
+            return response()->json([
+                'message' => 'An error occurred while fetching attendees.',
+                'error' => $e->getMessage()
+            ], 500);
+
+        }
     }
 
     /**
-     * Display the specified resource.
+     * Store a newly created attendee in storage.
+     * @param Request $request
+     * @param Event $event
+     * @return JsonResponse | AttendeeResource
+     * @throws Exception
      */
-    public function show(string $id)
+    public function store(Request $request, Event $event): AttendeeResource|JsonResponse
     {
-        //
+        try {
+            // TODO get the authenticated userID
+            $attendee = $event->attendees()->create(['user_id' => 663]);
+
+            return new AttendeeResource($this->loadRelationships($attendee));
+
+        } catch (Exception $e) {
+
+            Log::error($e->getMessage());
+
+            return response()->json([
+                'message' => 'An error occurred while creating the attendee.',
+                'error' => $e->getMessage(),
+            ], 500);
+
+        }
     }
 
     /**
-     * Update the specified resource in storage.
+     * Display the specified attendee.
+     * @param Event $event
+     * @param Attendee $attendee
+     * @return AttendeeResource | JsonResponse
+     * @throws Exception
      */
-    public function update(Request $request, string $id)
+    public function show(Event $event, Attendee $attendee): AttendeeResource|JsonResponse
     {
-        //
+        try {
+
+            return new AttendeeResource($this->loadRelationships($attendee));
+
+        } catch (Exception $e) {
+
+            Log::error($e->getMessage());
+
+            return response()->json([
+                'message' => 'An error occurred while fetching the attendee with id: ' . $attendee->id,
+                'error' => $e->getMessage(),
+            ], 500);
+
+        }
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified attendee from storage.
+     * @param Event $event
+     * @param Attendee $attendee
+     * @return JsonResponse
+     * @throws Exception
      */
-    public function destroy(string $id)
+    public function destroy(Event $event, Attendee $attendee): JsonResponse
     {
-        //
+        try {
+
+            $attendee->delete();
+
+            return response()->json(['message' => 'Attendee deleted successfully']);
+
+        } catch (Exception $e) {
+
+            Log::error($e->getMessage());
+
+            return response()->json([
+                'message' => 'An error occurred while deleting the attendee with id: ' . $attendee->id,
+                'error' => $e->getMessage(),
+            ], 500);
+
+        }
     }
 }

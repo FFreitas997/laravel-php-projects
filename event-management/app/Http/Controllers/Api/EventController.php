@@ -5,52 +5,70 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreEventRequest;
 use App\Http\Requests\UpdateEventRequest;
+use App\Http\Resources\EventResource;
+use App\Http\Traits\CanLoadRelationships;
 use App\Models\Event;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Log;
 
 class EventController extends Controller
 {
+    use CanLoadRelationships;
+
+    private array $relations;
+
+    public function __construct()
+    {
+        $this->relations = ['user', 'attendees', 'attendees.user'];
+    }
+
     /**
      * Display a listing of events.
      * @param Request $request
-     * @return JsonResponse
+     * @return AnonymousResourceCollection | JsonResponse
      * @throws Exception
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection|JsonResponse
     {
         try {
-            $size = $request->input('size', 10);
-
             $query = Event::query();
 
-            $events = $query
-                ->with(['user', 'attendees'])
-                ->orderBy('created_at', 'desc')
-                ->paginate($size);
+            $size = $request->input('size', 10);
 
-            return response()->json([$events]);
+            // Load relationships if specified
+            if ($request->has('include')) {
+                $query = $this->loadRelationships($query);
+            }
 
-        }catch (Exception $e){
+            $events = $query->latest()->paginate($size);
+
+            return EventResource::collection($events);
+
+        } catch (Exception $e) {
+
             Log::error($e->getMessage());
+
             return response()->json([
                 'message' => 'An error occurred while fetching events.',
-                'error' => $e->getMessage(),
+                'error' => $e->getMessage()
             ], 500);
+
         }
     }
 
     /**
      * Store a newly created event in storage.
      * @param StoreEventRequest $request
-     * @return JsonResponse
+     * @return JsonResponse | EventResource
      * @throws Exception
      */
-    public function store(StoreEventRequest $request): JsonResponse
+    public function store(StoreEventRequest $request): JsonResponse|EventResource
     {
         try {
+
             // TODO get the authenticated userID
             $event = Event::query()->create([
                 'name' => $request->input('name'),
@@ -60,51 +78,54 @@ class EventController extends Controller
                 'user_id' => 663
             ]);
 
-            return response()->json([$event], 201);
+            return new EventResource($this->loadRelationships($event));
 
-        }catch (Exception $e){
+        } catch (Exception $e) {
+
             Log::error($e->getMessage());
 
             return response()->json([
                 'message' => 'An error occurred while creating the event.',
                 'error' => $e->getMessage(),
             ], 500);
+
         }
     }
 
     /**
      * Display the specified event.
-     * @param string $id
-     * @return JsonResponse
+     * @param Event $event
+     * @return JsonResponse | EventResource
      * @throws Exception
      */
-    public function show(string $id): JsonResponse
+    public function show(Event $event): JsonResponse|EventResource
     {
         try {
-            $event = Event::with(['user'])->findOrFail($id);
 
-            return response()->json([$event]);
+            return new EventResource($this->loadRelationships($event));
 
-        }catch (Exception $e){
+        } catch (Exception $e) {
+
             Log::error($e->getMessage());
+
             return response()->json([
-                'message' => 'An error occurred while fetching the event with id: ' . $id,
+                'message' => 'An error occurred while fetching the event with id: ' . $event->id,
                 'error' => $e->getMessage(),
             ], 500);
+
         }
     }
 
     /**
      * Update the specified event in storage.
      * @param UpdateEventRequest $request
-     * @param string $id
-     * @return JsonResponse
+     * @param Event $event
+     * @return JsonResponse | EventResource
      * @throws Exception
      */
-    public function update(UpdateEventRequest $request, string $id): JsonResponse
+    public function update(UpdateEventRequest $request, Event $event): JsonResponse|EventResource
     {
         try {
-            $event = Event::findOrFail($id);
 
             $event->update([
                 'name' => $request->input('name'),
@@ -113,40 +134,43 @@ class EventController extends Controller
                 'end_time' => $request->input('end_time')
             ]);
 
-            return response()->json([$event]);
+            return new EventResource($this->loadRelationships($event));
 
-        }catch (Exception $e){
+        } catch (Exception $e) {
+
             Log::error($e->getMessage());
 
             return response()->json([
-                'message' => 'An error occurred while updating the event with id: ' . $id,
+                'message' => 'An error occurred while updating the event with id: ' . $event->id,
                 'error' => $e->getMessage(),
             ], 500);
+
         }
     }
 
     /**
      * Remove the specified event from storage.
-     * @param string $id
+     * @param Event $event
      * @return JsonResponse
      * @throws Exception
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Event $event): JsonResponse
     {
         try {
-            $event = Event::findOrFail($id);
 
             $event->delete();
 
-            return response()->json(['message' => 'Event deleted successfully.']);
+            return response()->json(['message' => 'Event deleted successfully with id: ' . $event->id]);
 
-        }catch (Exception $e){
+        } catch (Exception $e) {
+
             Log::error($e->getMessage());
 
             return response()->json([
-                'message' => 'An error occurred while deleting the event with id: ' . $id,
+                'message' => 'An error occurred while deleting the event with id: ' . $event->id,
                 'error' => $e->getMessage(),
             ], 500);
+
         }
     }
 }
