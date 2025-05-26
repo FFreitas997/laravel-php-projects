@@ -29,3 +29,4 @@ This repository contains some laravel projects:
 - `php artisan make:controller Api/AttendeeController --api`
 - `php artisan migrate:refresh --seed` - Apply all migration and seeder also
 - `php artisan make:resource ExampleResource` - create resource class
+- `php artisan make:policy AttendeePolicy --model=Attendee` - create a policy for a specific model
