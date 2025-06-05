@@ -12,6 +12,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
 class EventController extends Controller
@@ -23,6 +24,9 @@ class EventController extends Controller
     public function __construct()
     {
         $this->relations = ['user', 'attendees', 'attendees.user'];
+
+        // guard against unauthenticated access at the controller level
+        //$this->middleware('auth:sanctum')->except(['index', 'show']);
     }
 
     /**
@@ -34,6 +38,11 @@ class EventController extends Controller
     public function index(Request $request): AnonymousResourceCollection|JsonResponse
     {
         try {
+            if ($request->user()->cannot('viewAny', Event::class)) {
+                Log::error("You do not have permission to view events.");
+                return response()->json(['message' => 'You do not have permission to view events.'], 403);
+            }
+
             $query = Event::query();
 
             $size = $request->input('size', 10);
@@ -68,14 +77,14 @@ class EventController extends Controller
     public function store(StoreEventRequest $request): JsonResponse|EventResource
     {
         try {
+            $user = $request->user();
 
-            // TODO get the authenticated userID
             $event = Event::query()->create([
                 'name' => $request->input('name'),
                 'description' => $request->input('description'),
                 'start_time' => $request->input('start_time'),
                 'end_time' => $request->input('end_time'),
-                'user_id' => 663
+                'user_id' => $user->id
             ]);
 
             return new EventResource($this->loadRelationships($event));
@@ -109,7 +118,7 @@ class EventController extends Controller
             Log::error($e->getMessage());
 
             return response()->json([
-                'message' => 'An error occurred while fetching the event with id: ' . $event->id,
+                'message' => 'An error occurred while fetching the event',
                 'error' => $e->getMessage(),
             ], 500);
 
@@ -127,6 +136,17 @@ class EventController extends Controller
     {
         try {
 
+/*            if (Gate::denies('update-event', $event)) {
+                Log::error("You cannot update the event");
+                return response()->json(['message' => 'You do not have permission to update this event.'], 403);
+            }*/
+
+            // Check if the user has permission to update the event with policy
+            if ($request->user()->cannot('update', $event)) {
+                Log::error("You cannot update the event with id: " . $event->id);
+                return response()->json(['message' => 'You do not have permission to update this event.'], 403);
+            }
+
             $event->update([
                 'name' => $request->input('name'),
                 'description' => $request->input('description'),
@@ -141,7 +161,7 @@ class EventController extends Controller
             Log::error($e->getMessage());
 
             return response()->json([
-                'message' => 'An error occurred while updating the event with id: ' . $event->id,
+                'message' => 'An error occurred while updating the event',
                 'error' => $e->getMessage(),
             ], 500);
 
@@ -160,14 +180,14 @@ class EventController extends Controller
 
             $event->delete();
 
-            return response()->json(['message' => 'Event deleted successfully with id: ' . $event->id]);
+            return response()->json(['message' => 'Event deleted successfully']);
 
         } catch (Exception $e) {
 
             Log::error($e->getMessage());
 
             return response()->json([
-                'message' => 'An error occurred while deleting the event with id: ' . $event->id,
+                'message' => 'An error occurred while deleting the event',
                 'error' => $e->getMessage(),
             ], 500);
 

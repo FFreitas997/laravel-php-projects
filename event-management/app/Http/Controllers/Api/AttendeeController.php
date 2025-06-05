@@ -11,6 +11,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
 class AttendeeController extends Controller
@@ -68,8 +69,8 @@ class AttendeeController extends Controller
     public function store(Request $request, Event $event): AttendeeResource|JsonResponse
     {
         try {
-            // TODO get the authenticated userID
-            $attendee = $event->attendees()->create(['user_id' => 663]);
+            $user = $request->user();
+            $attendee = $event->attendees()->create(['user_id' => $user->id]);
 
             return new AttendeeResource($this->loadRelationships($attendee));
 
@@ -117,9 +118,21 @@ class AttendeeController extends Controller
      * @return JsonResponse
      * @throws Exception
      */
-    public function destroy(Event $event, Attendee $attendee): JsonResponse
+    public function destroy(Request $request, Event $event, Attendee $attendee): JsonResponse
     {
         try {
+
+/*            // Check if the user has permission to delete the attendee
+            if (Gate::denies('delete-attendee', [$event, $attendee])) {
+                Log::error("You cannot delete the attendee with id: " . $attendee->id);
+                return response()->json(['message' => 'You do not have permission to delete this attendee.'], 403);
+            }*/
+
+            // Check if the user has permission to delete the attendee with policy
+            if ($request->user()->cannot('delete', [$event, $attendee])) {
+                Log::error("You cannot delete the attendee with id: " . $attendee->id);
+                return response()->json(['message' => 'You do not have permission to delete this attendee.'], 403);
+            }
 
             $attendee->delete();
 

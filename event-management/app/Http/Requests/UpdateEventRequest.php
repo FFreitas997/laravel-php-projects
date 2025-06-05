@@ -12,7 +12,6 @@ class UpdateEventRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // TODO
         return true;
     }
 

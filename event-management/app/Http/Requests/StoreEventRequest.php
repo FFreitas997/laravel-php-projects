@@ -12,7 +12,6 @@ class StoreEventRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // TODO
         return true;
     }
 
