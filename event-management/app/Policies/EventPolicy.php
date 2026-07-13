@@ -10,26 +10,29 @@ class EventPolicy
 {
     /**
      * Determine whether the user can view any models.
+     * ?User means that the user can be null, allowing unauthenticated users to view events.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
         return true;
     }
 
     /**
      * Determine whether the user can view the model.
+     * ?User means that the user can be null, allowing unauthenticated users to view the event.
      */
-    public function view(User $user, Event $event): bool
+    public function view(?User $user, Event $event): bool
     {
-        return false;
+        return true;
     }
 
     /**
      * Determine whether the user can create models.
+     * User means that the user must be authenticated to create an event.
      */
     public function create(User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -45,7 +48,7 @@ class EventPolicy
      */
     public function delete(User $user, Event $event): bool
     {
-        return false;
+        return $user->id === $event->user_id;
     }
 
     /**
@@ -53,7 +56,7 @@ class EventPolicy
      */
     public function restore(User $user, Event $event): bool
     {
-        return false;
+        return $user->id === $event->user_id;
     }
 
     /**
@@ -61,6 +64,6 @@ class EventPolicy
      */
     public function forceDelete(User $user, Event $event): bool
     {
-        return false;
+        return $user->id === $event->user_id;
     }
 }

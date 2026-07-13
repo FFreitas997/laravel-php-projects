@@ -11,34 +11,29 @@ class AttendeePolicy
 {
     /**
      * Determine whether the user can view any models.
+     * ?User means that the user can be null, allowing unauthenticated users to view attendees.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
      * Determine whether the user can view the model.
+     * ?User means that the user can be null, allowing unauthenticated users to view the attendee.
      */
-    public function view(User $user, Attendee $attendee): bool
+    public function view(?User $user, Attendee $attendee): bool
     {
-        return false;
+        return true;
     }
 
     /**
      * Determine whether the user can create models.
+     * User means that the user must be authenticated to create an attendee.
      */
     public function create(User $user): bool
     {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Attendee $attendee): bool
-    {
-        return false;
+        return true;
     }
 
     /**
