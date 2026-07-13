@@ -30,3 +30,13 @@ This repository contains some laravel projects:
 - `php artisan migrate:refresh --seed` - Apply all migration and seeder also
 - `php artisan make:resource ExampleResource` - create resource class
 - `php artisan make:policy AttendeePolicy --model=Attendee` - create a policy for a specific model
+- `php artisan make:command SendEventReminders` - create custom commands
+- `php artisan app:send-event-reminders` - run custom commands
+- `php artisan` - list of all available commands
+- `php artisan schedule:work` - Runs the scheduler in the foreground in a loop — perfect for local dev, no cron needed
+- `php artisan schedule:list` - Shows all scheduled tasks and their next run time — great for sanity-checking
+- `php artisan schedule:run` - Runs any due tasks once (this is what cron calls every minute in production)
+- `php artisan make:notification EventReminder` - Scaffolds a notification class in app/Notifications/ with via(), toMail(), toDatabase(), etc.
+- `php artisan notifications:table` - Generates the migration for the notifications table (needed for database-channel notifications)
+- `php artisan make:mail EventReminderMailScaffolds` - full Mailable class, if you want richer emails than a notification's toMail() offers
+- `php artisan queue:work` - starts a queue worker — a long-running process that pulls jobs off your queue and executes them, one after another.
