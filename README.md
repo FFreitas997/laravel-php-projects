@@ -40,3 +40,5 @@ This repository contains some laravel projects:
 - `php artisan notifications:table` - Generates the migration for the notifications table (needed for database-channel notifications)
 - `php artisan make:mail EventReminderMailScaffolds` - full Mailable class, if you want richer emails than a notification's toMail() offers
 - `php artisan queue:work` - starts a queue worker — a long-running process that pulls jobs off your queue and executes them, one after another.
+
+- `php artisan make:livewire Counter` - generate a dynamic Livewire class and view template
